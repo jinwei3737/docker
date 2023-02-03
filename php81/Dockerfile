@@ -1,0 +1,23 @@
+FROM php:8.1-fpm
+
+#PDO扩展
+RUN docker-php-ext-install pdo_mysql
+#mysqli扩展
+RUN docker-php-ext-install mysqli
+#redis 扩展
+RUN pecl install redis && docker-php-ext-enable redis
+#GD库扩展
+RUN apt-get update
+RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev
+RUN docker-php-ext-install gd
+#swoole扩展
+RUN apt-get install -y openssl libssl-dev libcurl4-openssl-dev libc-ares-dev libc-ares2
+RUN pecl install -D 'enable-sockets="no" enable-openssl="yes" enable-http2="yes" enable-mysqlnd="yes" enable-swoole-json="no" enable-swoole-curl="yes" enable-cares="yes"' swoole
+RUN docker-php-ext-enable swoole
+#其他扩展
+RUN apt-get install -y libzip-dev zip
+RUN docker-php-ext-install zip
+#安装php composer
+RUN curl -sS https://getcomposer.org/installer | php \
+  && chmod +x composer.phar && mv composer.phar /usr/local/bin/composer
+RUN composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/

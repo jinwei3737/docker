@@ -1,0 +1,106 @@
+version: "1.0"
+
+services:
+  nginx:
+    image: nginx:alpine
+    restart: always
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /htdocs/www:/htdocs/www
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - docker-network
+    depends_on:
+      - php72
+      - php74
+      - php81
+
+  mysql:
+    image: mysql:5.7.16
+    restart: always
+    container_name: mysql
+    volumes:
+      - ./mysql/mydir:/mydir
+      - ./mysql/datadir:/var/lib/mysql
+      - ./mysql/conf/my.cnf:/etc/my.cnf
+      #      数据库还原目录 可将需要还原的sql文件放在这里
+      - /docker/mysql/source:/docker-entrypoint-initdb.d
+    environment:
+      - "MYSQL_ROOT_PASSWORD=admin123"
+    ports:
+      - "3306:3306"
+    networks:
+      - docker-network
+
+  redis:
+    image: redis:latest
+    restart: always
+    container_name: redis
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:rw
+      - ./redis/data:/data:rw
+    command:
+      /bin/bash -c "redis-server /usr/local/etc/redis/redis.conf"
+    ports:
+      - "6379:6379"
+    networks:
+      - docker-network
+
+  php72:
+    build:  #构建自定义镜像
+      context: ./php72/  #指定dockerfile文件的路径
+      dockerfile: Dockerfile  #指定dockerfile的文件名字
+    image: php:7.2
+    restart: always
+    container_name: php72
+    volumes:
+      - /htdocs/www:/htdocs/www
+      - ./php72/php.ini:/usr/local/etc/php/php.ini
+    ports:
+      - "9001:9000"
+    depends_on:
+      - mysql
+    networks:
+      - docker-network
+
+  php74:
+    build:  #构建自定义镜像
+      context: ./php74/  #指定dockerfile文件的路径
+      dockerfile: Dockerfile  #指定dockerfile的文件名字
+    image: php:7.4
+    restart: always
+    container_name: php74
+    volumes:
+      - /htdocs/www:/htdocs/www
+      - ./php74/php.ini:/usr/local/etc/php/php.ini
+    ports:
+      - "9002:9000"
+    depends_on:
+      - mysql
+    networks:
+      - docker-network
+
+  php81:
+    build:  #构建自定义镜像
+      context: ./php81/  #指定dockerfile文件的路径
+      dockerfile: Dockerfile  #指定dockerfile的文件名字
+    image: php:8.1
+    restart: always
+    container_name: php81
+    volumes:
+      - /htdocs/www:/htdocs/www
+      - ./php81/php.ini:/usr/local/etc/php/php.ini
+    ports:
+      - "9003:9000"
+    depends_on:
+      - mysql
+    networks:
+      - docker-network
+
+networks:
+  docker-network:
