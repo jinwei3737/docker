@@ -6,6 +6,10 @@ RUN docker-php-ext-install pdo_mysql
 RUN docker-php-ext-install mysqli
 #redis 扩展
 RUN pecl install redis && docker-php-ext-enable redis
+#处理apt-get缓慢问题
+RUN sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
+RUN sed -i s@/deb.debian.org/@/mirrors.aliyun.com/@g /etc/apt/sources.list
+RUN apt-get clean
 #GD库扩展
 RUN apt-get update
 RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev
@@ -21,3 +25,5 @@ RUN docker-php-ext-install zip
 RUN curl -sS https://install.phpcomposer.com/installer | php \
   && chmod +x composer.phar && mv composer.phar /usr/local/bin/composer
 RUN composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
+#安装常用软件
+RUN apt-get install -y vim
