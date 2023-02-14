@@ -6,8 +6,8 @@ services:
     restart: always
     container_name: nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "81:80"
+      - "444:443"
     volumes:
       - /htdocs/www:/htdocs/www
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
@@ -47,7 +47,7 @@ services:
     command:
       /bin/bash -c "redis-server /usr/local/etc/redis/redis.conf"
     ports:
-      - "6379:6379"
+      - "6380:6379"
     networks:
       - docker-network
 
@@ -101,6 +101,31 @@ services:
       - mysql
     networks:
       - docker-network
+
+  rabbitmq-master:
+    image: rabbitmq:3.8.7-management-alpine
+    container_name: mq-master
+    hostname: mq-master
+    extra_hosts:
+      # MQ主服务器
+      - "rabbitmq-master:192.168.123.108"
+      # MQ从服务器 1
+    #      - "rabbitmq-slave:192.168.123.109"
+    volumes:
+      - ./rabbitmq/data:/var/lib/rabbitmq
+      - ./rabbitmq/config/rabbitmq.sh:/etc/rabbitmq/rabbitmq.sh
+      - ./rabbitmq/hosts:/etc/hosts
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_ERLANG_COOKIE=rabbitCookie
+#    command:
+        # 此处命令可能需要进入容器执行
+#      - /bin/bash -c "cd /opt/rabbitmq/sbin && ./rabbitmq-plugins enable rabbitmq_management"
+    ports:
+      - 15672:15672
+    depends_on:
+      - nginx
 
 networks:
   docker-network:

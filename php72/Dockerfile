@@ -18,6 +18,6 @@ RUN docker-php-ext-enable swoole
 RUN apt-get install -y libzip-dev zip
 RUN docker-php-ext-install zip
 #安装php composer
-RUN curl -sS https://getcomposer.org/installer | php \
+RUN curl -sS https://install.phpcomposer.com/installer | php \
   && chmod +x composer.phar && mv composer.phar /usr/local/bin/composer
 RUN composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
