@@ -104,8 +104,8 @@ services:
 
   rabbitmq-master:
     image: rabbitmq:3.8.7-management-alpine
-    container_name: mq-master
-    hostname: mq-master
+    container_name: rabbitmq-master
+    hostname: rabbitmq-master
     extra_hosts:
       # MQ主服务器
       - "rabbitmq-master:192.168.123.108"
@@ -117,7 +117,7 @@ services:
       - ./rabbitmq/hosts:/etc/hosts
     environment:
       - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_DEFAULT_PASS=guest
       - RABBITMQ_ERLANG_COOKIE=rabbitCookie
 #    command:
         # 此处命令可能需要进入容器执行

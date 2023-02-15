@@ -4,6 +4,8 @@ FROM php:7.4-fpm
 RUN docker-php-ext-install pdo_mysql
 #mysqli扩展
 RUN docker-php-ext-install mysqli
+#sockets扩展
+RUN docker-php-ext-install sockets
 #redis 扩展
 RUN pecl install redis && docker-php-ext-enable redis
 #处理apt-get缓慢问题
