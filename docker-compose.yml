@@ -103,7 +103,11 @@ services:
       - docker-network
 
   rabbitmq-master:
-    image: rabbitmq:3.8.7-management-alpine
+    build: #构建自定义镜像
+      context: ./rabbitmq/  #指定dockerfile文件的路径
+      dockerfile: Dockerfile  #指定dockerfile的文件名字
+    image: rabbitmq:3.8.9
+    restart: always
     container_name: rabbitmq-master
     hostname: rabbitmq-master
     extra_hosts:
@@ -113,19 +117,14 @@ services:
     #      - "rabbitmq-slave:192.168.123.109"
     volumes:
       - ./rabbitmq/data:/var/lib/rabbitmq
-      - ./rabbitmq/config/rabbitmq.sh:/etc/rabbitmq/rabbitmq.sh
       - ./rabbitmq/hosts:/etc/hosts
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=admin123
       - RABBITMQ_ERLANG_COOKIE=rabbitCookie
-#    command:
-        # 此处命令可能需要进入容器执行
-#      - /bin/bash -c "cd /opt/rabbitmq/sbin && ./rabbitmq-plugins enable rabbitmq_management"
     ports:
+      - 5672:5672
       - 15672:15672
-    depends_on:
-      - nginx
 
 networks:
   docker-network:

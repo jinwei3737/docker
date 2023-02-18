@@ -23,6 +23,25 @@ RUN docker-php-ext-enable swoole
 #其他扩展
 RUN apt-get install -y libzip-dev zip
 RUN docker-php-ext-install zip
+#安装rabbitmq扩展
+RUN apt-get install -y wget cmake
+RUN wget https://github.com/alanxz/rabbitmq-c/archive/refs/tags/v0.13.0.tar.gz  \
+    && wget https://pecl.PHP.net/get/amqp-1.11.0.tgz
+RUN tar -zxvf v0.13.0.tar.gz  \
+    && cd rabbitmq-c-0.13.0  \
+    && mkdir build  \
+    && cd build  \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr/local/rabbitmq-c ..  \
+    && make && make install \
+    && ln -s /usr/local/lib64 /usr/local/lib \
+    && cd ../../
+RUN tar -zxvf amqp-1.11.0.tgz  \
+    && cd amqp-1.11.0  \
+    && /usr/local/bin/phpize  \
+    && ./configure --with-PHP-config=/usr/local/bin/PHP-config --with-amqp --with-librabbitmq-dir=/usr/local/rabbitmq-c  \
+    && make && make install \
+    && cd -
+RUN docker-php-ext-enable amqp.so
 #安装php composer
 RUN curl -sS https://install.phpcomposer.com/installer | php \
   && chmod +x composer.phar && mv composer.phar /usr/local/bin/composer
