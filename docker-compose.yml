@@ -119,8 +119,8 @@ services:
       - ./rabbitmq/data:/var/lib/rabbitmq
       - ./rabbitmq/hosts:/etc/hosts
     environment:
-      - RABBITMQ_DEFAULT_USER=root
-      - RABBITMQ_DEFAULT_PASS=admin123
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
       - RABBITMQ_ERLANG_COOKIE=rabbitCookie
     ports:
       - 5672:5672
