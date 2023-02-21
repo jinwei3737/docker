@@ -49,4 +49,4 @@ RUN curl -sS https://install.phpcomposer.com/installer | php \
   && chmod +x composer.phar && mv composer.phar /usr/local/bin/composer
 RUN composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
 #安装常用软件
-RUN apt-get install -y vim
+RUN apt-get install -y vim git
