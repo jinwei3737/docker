@@ -20,7 +20,7 @@ RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev
 RUN docker-php-ext-install gd
 #swoole扩展 php7 最高支持 swoole4.8 / 使用本地包以解决联通网络下https://pecl.php.net/package/swoole下载慢的问题
 RUN apt-get install -y openssl libssl-dev libcurl4-openssl-dev libc-ares-dev libc-ares2
-COPY ./swoole-4.8.12.tgz /var/www/html/swoole-4.8.12.tgz
+COPY ./php_ext/swoole-4.8.12.tgz /var/www/html/swoole-4.8.12.tgz
 RUN pecl install -D 'enable-sockets="no" enable-openssl="yes" enable-http2="yes" enable-mysqlnd="yes" enable-swoole-json="no" enable-swoole-curl="yes" enable-cares="yes"' /var/www/html/swoole-4.8.12.tgz
 RUN docker-php-ext-enable swoole
 #其他扩展
