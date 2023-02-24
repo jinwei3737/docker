@@ -7,7 +7,8 @@ RUN docker-php-ext-install mysqli
 #sockets扩展（rabbitmq 依赖）
 RUN docker-php-ext-install sockets
 #redis 扩展
-RUN pecl install redis && docker-php-ext-enable redis
+COPY ./php_ext/redis-5.3.7.tgz /var/www/html/redis-5.3.7.tgz
+RUN pecl install /var/www/html/redis-5.3.7.tgz && docker-php-ext-enable redis
 #处理apt-get缓慢问题
 RUN sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
 RUN sed -i s@/deb.debian.org/@/mirrors.aliyun.com/@g /etc/apt/sources.list

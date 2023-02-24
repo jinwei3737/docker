@@ -7,7 +7,8 @@ RUN docker-php-ext-install mysqli
 #sockets扩展（rabbitmq 依赖）
 RUN docker-php-ext-install sockets
 #redis 扩展
-RUN pecl install redis && docker-php-ext-enable redis
+COPY ./php_ext/redis-5.3.7.tgz /var/www/html/redis-5.3.7.tgz
+RUN pecl install /var/www/html/redis-5.3.7.tgz && docker-php-ext-enable redis
 #处理apt-get缓慢问题
 RUN sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
 RUN sed -i s@/deb.debian.org/@/mirrors.aliyun.com/@g /etc/apt/sources.list
@@ -19,7 +20,7 @@ RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev
 RUN docker-php-ext-install gd
 #swoole扩展 php7 最高支持 swoole4.8 / 使用本地包以解决联通网络下https://pecl.php.net/package/swoole下载慢的问题
 RUN apt-get install -y openssl libssl-dev libcurl4-openssl-dev libc-ares-dev libc-ares2
-COPY ./swoole-4.8.12.tgz /var/www/html/swoole-4.8.12.tgz
+COPY ./php_ext/swoole-4.8.12.tgz /var/www/html/swoole-4.8.12.tgz
 RUN pecl install -D 'enable-sockets="no" enable-openssl="yes" enable-http2="yes" enable-mysqlnd="yes" enable-swoole-json="no" enable-swoole-curl="yes" enable-cares="yes"' /var/www/html/swoole-4.8.12.tgz
 RUN docker-php-ext-enable swoole
 #其他扩展
