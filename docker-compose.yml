@@ -6,7 +6,7 @@ services:
     restart: always
     container_name: nginx
     ports:
-      - "81:80"
+      - "80:80"
       - "444:443"
     volumes:
       - /htdocs/www:/htdocs/www
