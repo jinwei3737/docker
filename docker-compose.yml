@@ -10,6 +10,7 @@ services:
       - "444:443"
     volumes:
       - /htdocs/www:/htdocs/www
+      - /htdocs/log:/htdocs/log
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/logs:/var/log/nginx
@@ -19,6 +20,7 @@ services:
       - php72
       - php74
       - php81
+      - php82
 
   mysql:
     image: mysql:5.7.16
@@ -63,6 +65,7 @@ services:
       - ./php72/php.ini:/usr/local/etc/php/php.ini
     ports:
       - "9001:9000"
+    command: ["php-fpm"]
     depends_on:
       - mysql
     networks:
@@ -80,6 +83,7 @@ services:
       - ./php74/php.ini:/usr/local/etc/php/php.ini
     ports:
       - "9002:9000"
+    command: ["php-fpm"]
     depends_on:
       - mysql
     networks:
@@ -97,6 +101,25 @@ services:
       - ./php81/php.ini:/usr/local/etc/php/php.ini
     ports:
       - "9003:9000"
+    command: ["php-fpm"]
+    depends_on:
+      - mysql
+    networks:
+      - docker-network
+
+  php82:
+    build: #构建自定义镜像
+      context: ./php82/  #指定dockerfile文件的路径
+      dockerfile: Dockerfile  #指定dockerfile的文件名字
+    image: php:8.2
+    restart: always
+    container_name: php82
+    volumes:
+      - /htdocs/www:/htdocs/www
+      - ./php82/php.ini:/usr/local/etc/php/php.ini
+    ports:
+      - "9004:9000"
+    command: ["php-fpm"]
     depends_on:
       - mysql
     networks:
@@ -126,5 +149,36 @@ services:
       - 5672:5672
       - 15672:15672
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ELASTIC_PASSWORD=admin123  # 设置 elastic 用户的密码
+      - xpack.security.enabled=true      # 启用安全功能
+    volumes:
+      - ./elasticsearch/data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - docker-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.2
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=2xr6klLc9liXiSeu4rrm  # 与 Elasticsearch 中设置的密码一致
+    ports:
+      - "5601:5601"
+    networks:
+      - docker-network
+    depends_on:
+      - elasticsearch
+
 networks:
   docker-network:
+    driver: bridge
