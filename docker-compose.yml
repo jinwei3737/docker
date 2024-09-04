@@ -13,14 +13,10 @@ services:
       - /htdocs/log:/htdocs/log
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/logs:/var/log/nginx
     networks:
       - docker-network
     depends_on:
-      - php72
-      - php74
       - php81
-      - php82
 
   mysql:
     image: mysql:5.7.16
@@ -33,7 +29,7 @@ services:
       #      数据库还原目录 可将需要还原的sql文件放在这里
       - ./mysql/source:/docker-entrypoint-initdb.d
     environment:
-      - "MYSQL_ROOT_PASSWORD=admin123"
+      - "MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}"
     ports:
       - "3306:3306"
     networks:
@@ -49,43 +45,7 @@ services:
     command:
       /bin/bash -c "redis-server /usr/local/etc/redis/redis.conf"
     ports:
-      - "6380:6379"
-    networks:
-      - docker-network
-
-  php72:
-    build:  #构建自定义镜像
-      context: ./php72/  #指定dockerfile文件的路径
-      dockerfile: Dockerfile  #指定dockerfile的文件名字
-    image: php:7.2
-    restart: always
-    container_name: php72
-    volumes:
-      - /htdocs/www:/htdocs/www
-      - ./php72/php.ini:/usr/local/etc/php/php.ini
-    ports:
-      - "9001:9000"
-    command: ["php-fpm"]
-    depends_on:
-      - mysql
-    networks:
-      - docker-network
-
-  php74:
-    build:  #构建自定义镜像
-      context: ./php74/  #指定dockerfile文件的路径
-      dockerfile: Dockerfile  #指定dockerfile的文件名字
-    image: php:7.4
-    restart: always
-    container_name: php74
-    volumes:
-      - /htdocs/www:/htdocs/www
-      - ./php74/php.ini:/usr/local/etc/php/php.ini
-    ports:
-      - "9002:9000"
-    command: ["php-fpm"]
-    depends_on:
-      - mysql
+      - "6379:6379"
     networks:
       - docker-network
 
@@ -100,84 +60,12 @@ services:
       - /htdocs/www:/htdocs/www
       - ./php81/php.ini:/usr/local/etc/php/php.ini
     ports:
-      - "9003:9000"
+      - "9000:9000"
     command: ["php-fpm"]
     depends_on:
       - mysql
     networks:
       - docker-network
-
-  php82:
-    build: #构建自定义镜像
-      context: ./php82/  #指定dockerfile文件的路径
-      dockerfile: Dockerfile  #指定dockerfile的文件名字
-    image: php:8.2
-    restart: always
-    container_name: php82
-    volumes:
-      - /htdocs/www:/htdocs/www
-      - ./php82/php.ini:/usr/local/etc/php/php.ini
-    ports:
-      - "9004:9000"
-    command: ["php-fpm"]
-    depends_on:
-      - mysql
-    networks:
-      - docker-network
-
-  rabbitmq-master:
-    build: #构建自定义镜像
-      context: ./rabbitmq/  #指定dockerfile文件的路径
-      dockerfile: Dockerfile  #指定dockerfile的文件名字
-    image: rabbitmq:3.8.9
-    restart: always
-    container_name: rabbitmq-master
-    hostname: rabbitmq-master
-    extra_hosts:
-      # MQ主服务器
-      - "rabbitmq-master:192.168.123.108"
-      # MQ从服务器 1
-    #      - "rabbitmq-slave:192.168.123.109"
-    volumes:
-      - ./rabbitmq/data:/var/lib/rabbitmq
-      - ./rabbitmq/hosts:/etc/hosts
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-      - RABBITMQ_ERLANG_COOKIE=rabbitCookie
-    ports:
-      - 5672:5672
-      - 15672:15672
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.2
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - ELASTIC_PASSWORD=admin123  # 设置 elastic 用户的密码
-      - xpack.security.enabled=true      # 启用安全功能
-    volumes:
-      - ./elasticsearch/data:/usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    networks:
-      - docker-network
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.9.2
-    container_name: kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=2xr6klLc9liXiSeu4rrm  # 与 Elasticsearch 中设置的密码一致
-    ports:
-      - "5601:5601"
-    networks:
-      - docker-network
-    depends_on:
-      - elasticsearch
 
 networks:
   docker-network:
