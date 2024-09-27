@@ -3,11 +3,11 @@ version: "1.0"
 services:
   nginx:
     image: nginx:alpine
-    restart: always
     container_name: nginx
     ports:
       - "80:80"
       - "444:443"
+      - "15670:15670"
     volumes:
       - /htdocs/www:/htdocs/www
       - /htdocs/log:/htdocs/log
@@ -17,10 +17,7 @@ services:
     networks:
       - docker-network
     depends_on:
-      - php72
-      - php74
       - php81
-      - php82
 
   mysql:
     image: mysql:5.7.16
@@ -53,101 +50,75 @@ services:
     networks:
       - docker-network
 
-  php72:
-    build:  #构建自定义镜像
-      context: ./php72/  #指定dockerfile文件的路径
-      dockerfile: Dockerfile  #指定dockerfile的文件名字
-    image: php:7.2
-    restart: always
-    container_name: php72
-    volumes:
-      - /htdocs/www:/htdocs/www
-      - ./php72/php.ini:/usr/local/etc/php/php.ini
-    ports:
-      - "9001:9000"
-    command: ["php-fpm"]
-    depends_on:
-      - mysql
-    networks:
-      - docker-network
-
-  php74:
-    build:  #构建自定义镜像
-      context: ./php74/  #指定dockerfile文件的路径
-      dockerfile: Dockerfile  #指定dockerfile的文件名字
-    image: php:7.4
-    restart: always
-    container_name: php74
-    volumes:
-      - /htdocs/www:/htdocs/www
-      - ./php74/php.ini:/usr/local/etc/php/php.ini
-    ports:
-      - "9002:9000"
-    command: ["php-fpm"]
-    depends_on:
-      - mysql
-    networks:
-      - docker-network
-
   php81:
     build:  #构建自定义镜像
       context: ./php81/  #指定dockerfile文件的路径
       dockerfile: Dockerfile  #指定dockerfile的文件名字
     image: php:8.1
-    restart: always
     container_name: php81
     volumes:
       - /htdocs/www:/htdocs/www
       - ./php81/php.ini:/usr/local/etc/php/php.ini
     ports:
-      - "9003:9000"
+      - "9000:9000"
     command: ["php-fpm"]
     depends_on:
       - mysql
     networks:
       - docker-network
 
-  php82:
-    build: #构建自定义镜像
-      context: ./php82/  #指定dockerfile文件的路径
-      dockerfile: Dockerfile  #指定dockerfile的文件名字
-    image: php:8.2
-    restart: always
-    container_name: php82
-    volumes:
-      - /htdocs/www:/htdocs/www
-      - ./php82/php.ini:/usr/local/etc/php/php.ini
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
     ports:
-      - "9004:9000"
-    command: ["php-fpm"]
-    depends_on:
-      - mysql
+      - "5670:5670"  # 负载均衡端口
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg  # 配置文件
+      - /htdocs/haproxy/log:/var/log
     networks:
       - docker-network
 
-  rabbitmq-master:
+  rabbit1:
     build: #构建自定义镜像
       context: ./rabbitmq/  #指定dockerfile文件的路径
       dockerfile: Dockerfile  #指定dockerfile的文件名字
-    image: rabbitmq:3.8.9
-    restart: always
-    container_name: rabbitmq-master
-    hostname: rabbitmq-master
-    extra_hosts:
-      # MQ主服务器
-      - "rabbitmq-master:192.168.123.108"
-      # MQ从服务器 1
-    #      - "rabbitmq-slave:192.168.123.109"
-    volumes:
-      - ./rabbitmq/data:/var/lib/rabbitmq
-      - ./rabbitmq/hosts:/etc/hosts
+    image: rabbitmq:3-management
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-      - RABBITMQ_ERLANG_COOKIE=rabbitCookie
+      - RABBITMQ_ERLANG_COOKIE=mycookie
+      - "RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}"
+      - "RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}"
+    volumes:
+      - "/htdocs/rabbitmq1:/var/lib/rabbitmq"
     ports:
-      - 5672:5672
-      - 15672:15672
+      - "5672:5672"
+      - "15672:15672"
+    container_name: rabbit1
+    hostname: rabbit1
+    depends_on:
+      - haproxy
+    networks:
+      - docker-network
+
+  rabbit2:
+    build: #构建自定义镜像
+      context: ./rabbitmq/  #指定dockerfile文件的路径
+      dockerfile: Dockerfile  #指定dockerfile的文件名字
+    image: rabbitmq:3-management
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=mycookie
+      - "RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}"
+      - "RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}"
+    volumes:
+      - "/htdocs/rabbitmq2:/var/lib/rabbitmq"
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    container_name: rabbit2
+    hostname: rabbit2
+    depends_on:
+      - rabbit1
+    networks:
+      - docker-network
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.9.2
@@ -155,10 +126,10 @@ services:
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - ELASTIC_PASSWORD=admin123  # 设置 elastic 用户的密码
+      - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"  # 设置 elastic 用户的密码
       - xpack.security.enabled=true      # 启用安全功能
     volumes:
-      - ./elasticsearch/data:/usr/share/elasticsearch/data
+      - /htdocs/elasticsearch/data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
       - "9300:9300"
