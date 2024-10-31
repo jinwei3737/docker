@@ -6,6 +6,8 @@ RUN docker-php-ext-install pdo_mysql
 RUN docker-php-ext-install mysqli
 #sockets扩展（rabbitmq 依赖）
 RUN docker-php-ext-install sockets
+#pcntl扩展（PHP开启多进程的扩展Hyperf）
+RUN docker-php-ext-install pcntl
 #redis 扩展
 COPY ./php_ext/redis-5.3.7.tgz /var/www/html/redis-5.3.7.tgz
 RUN pecl install /var/www/html/redis-5.3.7.tgz && docker-php-ext-enable redis

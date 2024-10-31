@@ -3,6 +3,7 @@ version: "1.0"
 services:
   nginx:
     image: nginx:alpine
+    restart: always
     container_name: nginx
     ports:
       - "80:80"
@@ -42,11 +43,11 @@ services:
     container_name: redis
     volumes:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:rw
-      - ./redis/data:/data:rw
+      - /htdocs/redis/data:/data:rw
     command:
       /bin/bash -c "redis-server /usr/local/etc/redis/redis.conf"
     ports:
-      - "6380:6379"
+      - "6379:6379"
     networks:
       - docker-network
 
@@ -55,12 +56,14 @@ services:
       context: ./php81/  #指定dockerfile文件的路径
       dockerfile: Dockerfile  #指定dockerfile的文件名字
     image: php:8.1
+    restart: always
     container_name: php81
     volumes:
       - /htdocs/www:/htdocs/www
       - ./php81/php.ini:/usr/local/etc/php/php.ini
     ports:
       - "9000:9000"
+      - "9501:9501" # hyperf框架端口
     command: ["php-fpm"]
     depends_on:
       - mysql
@@ -69,12 +72,16 @@ services:
 
   haproxy:
     image: haproxy:latest
+    restart: always
     container_name: haproxy
     ports:
       - "5670:5670"  # 负载均衡端口
     volumes:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg  # 配置文件
       - /htdocs/haproxy/log:/var/log
+    depends_on:
+      - rabbit1
+      - rabbit2
     networks:
       - docker-network
 
@@ -83,6 +90,7 @@ services:
       context: ./rabbitmq/  #指定dockerfile文件的路径
       dockerfile: Dockerfile  #指定dockerfile的文件名字
     image: rabbitmq:3-management
+    restart: always
     environment:
       - RABBITMQ_ERLANG_COOKIE=mycookie
       - "RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}"
@@ -94,8 +102,6 @@ services:
       - "15672:15672"
     container_name: rabbit1
     hostname: rabbit1
-    depends_on:
-      - haproxy
     networks:
       - docker-network
 
@@ -104,6 +110,7 @@ services:
       context: ./rabbitmq/  #指定dockerfile文件的路径
       dockerfile: Dockerfile  #指定dockerfile的文件名字
     image: rabbitmq:3-management
+    restart: always
     environment:
       - RABBITMQ_ERLANG_COOKIE=mycookie
       - "RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}"
@@ -122,6 +129,7 @@ services:
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.9.2
+    restart: always
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
@@ -138,6 +146,7 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.9.2
+    restart: always
     container_name: kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
