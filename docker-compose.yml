@@ -8,7 +8,6 @@ services:
     ports:
       - "80:80"
       - "444:443"
-      - "15670:15670"
     volumes:
       - /htdocs/www:/htdocs/www
       - /htdocs/log:/htdocs/log
@@ -71,11 +70,14 @@ services:
       - docker-network
 
   haproxy:
-    image: haproxy:latest
+    build: #构建自定义镜像
+      context: ./haproxy/  #指定dockerfile文件的路径
+      dockerfile: Dockerfile  #指定dockerfile的文件名字
     restart: always
     container_name: haproxy
     ports:
       - "5670:5670"  # 负载均衡端口
+      - "15670:15670"
     volumes:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg  # 配置文件
       - /htdocs/haproxy/log:/var/log
@@ -93,6 +95,7 @@ services:
     restart: always
     environment:
       - RABBITMQ_ERLANG_COOKIE=mycookie
+      - RABBITMQ_LOOPBACK_GUEST=false
       - "RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}"
       - "RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}"
     volumes:
@@ -113,6 +116,7 @@ services:
     restart: always
     environment:
       - RABBITMQ_ERLANG_COOKIE=mycookie
+      - RABBITMQ_LOOPBACK_GUEST=false
       - "RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}"
       - "RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}"
     volumes:
